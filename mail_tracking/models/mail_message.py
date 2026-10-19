@@ -5,7 +5,7 @@
 from email.utils import getaddresses
 
 from odoo import _, api, fields, models
-from odoo.osv import expression
+from odoo.fields import Domain
 from odoo.tools import email_split
 
 
@@ -70,7 +70,7 @@ class MailMessage(models.Model):
         notification_partner_ids = self.search(
             [("notification_ids.res_partner_id", "=", self.env.user.partner_id.id)]
         )
-        return expression.normalize_domain(
+        return Domain(
             [
                 (
                     "mail_tracking_ids.state",

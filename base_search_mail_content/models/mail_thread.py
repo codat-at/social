@@ -7,23 +7,25 @@
 from lxml import etree
 
 from odoo import api, fields, models
-from odoo.osv import expression
+from odoo.fields import Domain
 
 
 class MailThread(models.AbstractModel):
     _inherit = "mail.thread"
 
     def _search_message_content(self, operator, value):
-        model_domain = [("model", "=", self._name)]
-        if operator not in expression.NEGATIVE_TERM_OPERATORS:
-            model_domain += ["|"] * 4
-        model_domain += [
-            ("record_name", operator, value),
-            ("subject", operator, value),
-            ("body", operator, value),
-            ("email_from", operator, value),
-            ("reply_to", operator, value),
-        ]
+        if operator in Domain.NEGATIVE_OPERATORS:
+            # the ORM negates the result of the positive operator
+            return NotImplemented
+        model_domain = Domain("model", "=", self._name) & Domain.OR(
+            Domain(field_name, operator, value)
+            for field_name in (
+                "subject",
+                "body",
+                "email_from",
+                "reply_to",
+            )
+        )
         recs = self.env["mail.message"].search(model_domain)
         return [("id", "in", recs.mapped("res_id"))]
 
